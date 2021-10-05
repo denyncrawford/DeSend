@@ -139,6 +139,7 @@ export default {
   },
   async mounted() {
     const user = this.user;
+    this.isLoading = true;
     if (user) {
       try {
         await this.connect(user);
@@ -148,6 +149,7 @@ export default {
       return this.$router.push("/app");
     }
     await this.generate();
+    this.isLoading = false;
   },
   components: {
     Loader

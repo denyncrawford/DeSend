@@ -17,7 +17,9 @@ export default {
   },
   async mounted() {
     this.setUser(await getUser())
-    this.$router.beforeEach((to, from, next) => {
+    this.$router.beforeEach(async (to, from, next) => {
+      if (to.meta.requiresAuth && !await getUser()) return next({ name: 'connect', query: { redirect: to.fullPath } })
+      if (to.meta.requiresLogout && await getUser()) return next({ name: 'app' })
       document.title = to.meta.title
       next()
     })
