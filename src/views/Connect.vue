@@ -72,6 +72,7 @@ import { mapState, mapMutations } from "vuex";
 import { setUser } from "../services/localstorage.service.js";
 import { createUser, validateCreation } from "../services/account.service.js";
 import Loader from '../components/Loader.vue'
+import { ipfsConfig as config } from "../services/storage.service.js"
 export default {
   data() {
     return {
@@ -92,18 +93,7 @@ export default {
     async connect(user) {
       const node = await IPFS.create({
         repo: user.id,
-        config: {
-          Addresses: {
-            Swarm: [
-              "/dns4/star.thedisco.zone/tcp/9090/wss/p2p-webrtc-star",
-              "/dns6/star.thedisco.zone/tcp/9090/wss/p2p-webrtc-star",
-            ],
-            Bootstrap: [
-              "/dns6/ipfs.thedisco.zone/tcp/4430/wss/p2p/12D3KooWChhhfGdB9GJy1GbhghAAKCUR99oCymMEVS4eUcEy67nt",
-              "/dns4/ipfs.thedisco.zone/tcp/4430/wss/p2p/12D3KooWChhhfGdB9GJy1GbhghAAKCUR99oCymMEVS4eUcEy67nt",
-            ],
-          },
-        },
+        config
       });
       this.setIpfsNode(node);
     },
