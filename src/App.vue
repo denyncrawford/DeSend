@@ -10,7 +10,7 @@
 
 <script>
 import { getUser } from './services/localstorage.service.js';
-import { IPFS, ipfsConfig as config, Database } from './services/storage.service.js'
+import { IPFS, ipfsConfig as config, Database, dbConfig } from './services/storage.service.js'
 import { mapMutations, mapState } from 'vuex'
 export default {
   methods: {
@@ -20,13 +20,17 @@ export default {
     ...mapState(['ipfsNode'])
   },
   async mounted() {
-    const initialUser = await getUser()
+    const initialUser = await getUser();
     this.setUser(initialUser)
     if (initialUser && !this.ipfsNode) { 
       this.setIpfsNode(await IPFS.create({ repo: initialUser.id, config }));
       const controller = await Database.createInstance(this.ipfsNode);
-      const db = await controller.docs('desend')
-      console.log(db.address.toString()); 
+      const db = await controller.docs('desend', dbConfig);
+      db.events.on('replicated', async () => {
+        console.log(await db.get(''))
+      })
+      await db.load()
+      await db.put({ _id: initialUser.id, data: initialUser })
     }
     this.$router.beforeEach(async (to, from, next) => {
       const user = await getUser()
