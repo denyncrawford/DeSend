@@ -2,7 +2,9 @@
 import "../../node_modules/ipfs-core/index.min.js";
 export const IPFS = window.IpfsCore;
 
-export const Database = AvionDB;
+export const Database = OrbitDB;
+
+console.log(Database)
 
 export const ipfsConfig = {
   Addresses: {

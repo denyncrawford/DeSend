@@ -22,11 +22,11 @@ export default {
   async mounted() {
     const initialUser = await getUser()
     this.setUser(initialUser)
-    console.log(await Database.listDatabases());
     if (initialUser && !this.ipfsNode) { 
       this.setIpfsNode(await IPFS.create({ repo: initialUser.id, config }));
-      const aviondb = await Database.init("DeSend", this.ipfsNode);
-      await AvionDB.listDatabases();
+      const controller = await Database.createInstance(this.ipfsNode);
+      const db = await controller.docs('desend')
+      console.log(db.address.toString()); 
     }
     this.$router.beforeEach(async (to, from, next) => {
       const user = await getUser()
