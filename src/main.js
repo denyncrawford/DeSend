@@ -1,3 +1,4 @@
+if (typeof window.global === 'undefined') window.global = window;
 import { createApp } from 'vue'
 import './tailwind.css'
 import "animate.css"

@@ -1,3 +1,9 @@
+
+import "../../node_modules/ipfs-core/index.min.js";
+export const IPFS = window.IpfsCore;
+
+export const Database = AvionDB;
+
 export const ipfsConfig = {
   Addresses: {
     Swarm: [

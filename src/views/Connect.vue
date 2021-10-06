@@ -66,13 +66,11 @@
   </div>
 </template>
 <script>
-import "../../node_modules/ipfs-core/index.min.js";
-const IPFS = window.IpfsCore;
 import { mapState, mapMutations } from "vuex";
 import { setUser } from "../services/localstorage.service.js";
 import { createUser, validateCreation } from "../services/account.service.js";
 import Loader from '../components/Loader.vue'
-import { ipfsConfig as config } from "../services/storage.service.js"
+import { ipfsConfig as config, IPFS } from "../services/storage.service.js";
 export default {
   data() {
     return {
