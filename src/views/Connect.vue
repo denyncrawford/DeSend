@@ -24,10 +24,10 @@
           <loader/>
         </div>
         <div class="grid grid-cols-4">
-          <button @click="isGen = true; generate()" :class="[isGen ? 'border-indigo-600 text-indigo-600' : 'text-white']" class="hover:border-indigo-600 hover:text-indigo-600 border rounded-tl-lg col-span-2 px-10 py-2 border-gray-700 border-dashed">Generate</button>
-          <button @click="isGen = false; clear()" :class="[!isGen ? 'border-indigo-600 text-indigo-600' : 'text-white']" class="hover:border-indigo-600 hover:text-indigo-600 border rounded-tr-lg col-span-2 px-10 py-2 border-gray-700 border-dashed">Import</button>
+          <button @click="isGen = true; generate()" :class="[isGen ? 'border-indigo-600 text-indigo-600 border-b-gray-700' : 'text-white border-gray-700 border-b-indigo-600']" class="hover:border-indigo-600 hover:text-indigo-600 border rounded-tl-lg col-span-2 px-10 py-2 border-dashed">Generate</button>
+          <button @click="isGen = false; clear()" :class="[!isGen ? 'border-indigo-600 text-indigo-600 border-b-gray-700' : 'text-white border-gray-700 border-b-indigo-600']" class="hover:border-indigo-600 hover:text-indigo-600 border rounded-tr-lg col-span-2 px-10 py-2 border-dashed">Import</button>
         </div>
-        <div v-show="isGen" class="border grid grid-cols-3 border-indigo-600 border-dashed rounded-bl-lg rounded-br-lg">
+        <div v-show="isGen" class="border grid grid-cols-3 border-indigo-600 border-t-transparent border-dashed rounded-bl-lg rounded-br-lg">
           <div class="col-span-3 pt-10 pb-2 flex items-center justify-center">
             <div :style="{ backgroundImage: `url('${userForm.avatar}')` }" class="w-32 h-32 bg-center bg-contain bg-no-repeat">
 
@@ -46,7 +46,7 @@
             <input disabled v-model="userForm.id" class="text-gray-500 text-center bg-transparent border-transparent outline-none" placeholder="type an username" type="text">
           </div>
         </div>
-        <div v-show="!isGen" class="border grid grid-cols-3 border-indigo-600 border-dashed rounded-bl-lg rounded-br-lg">
+        <div v-show="!isGen" class="border border-t-transparent grid grid-cols-3 border-indigo-600 border-dashed rounded-bl-lg rounded-br-lg">
           <div class="col-span-3 pt-10 pb-2 flex items-center justify-center">
             <div :style="{ filter: 'invert(100%)', backgroundImage: `url('http://www.team-energy.nl/wp-content/uploads/2019/12/HandschoenRechts-1.png')` }" class="w-32 h-32 bg-center bg-contain bg-no-repeat">
 
