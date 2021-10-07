@@ -70,7 +70,7 @@ import { mapState, mapMutations } from "vuex";
 import { setUser } from "../services/localstorage.service.js";
 import { createUser, validateCreation } from "../services/account.service.js";
 import Loader from '../components/Loader.vue'
-import { ipfsConfig as config, IPFS } from "../services/storage.service.js";
+import { ipfsConfig as config, IPFS, Database, dbConfig } from "../services/storage.service.js";
 export default {
   data() {
     return {
@@ -84,16 +84,45 @@ export default {
     };
   },
   computed: {
-    ...mapState(["ipfsNode", "user"]),
+    ...mapState(["ipfsNode", "user", "DBController"]),
   },
   methods: {
-    ...mapMutations(["setIpfsNode"]),
+    ...mapMutations(["setIpfsNode", "setDBController", "setMainDatabase", "setUser"]),
     async connect(user) {
       const node = await IPFS.create({
-        repo: user.id,
+        repo: 'devSend',
         config
       });
       this.setIpfsNode(node);
+      const controller = await Database.createInstance(this.ipfsNode);
+      this.setDBController(controller);
+      const db = await controller.docs('desend', dbConfig);
+      await db.load();
+      this.setMainDatabase(db);
+      if (this.isGen) { 
+        const chatsDb = await controller.docs(`${user.id}-chats`, dbConfig);
+        await chatsDb.load();
+        const addr = await chatsDb.address.toString();
+        return await db.put({
+          _id: user.id,
+          data: user,
+          chats: addr
+        }, {
+          pin: true
+        });
+      }
+      const found = await db.get(user.id);
+      if (found.length) return this.userForm = {
+        ...this.userForm,
+        username: found[0].data.username,
+        avatar: found[0].data.avatar
+      };
+      await this.DBController.stop();
+      this.setDBController(null)
+      this.setMainDatabase(null)
+      await this.ipfsNode.stop();
+      this.setIpfsNode(null)
+      throw new Error("User not found");
     },
     async generate() {
       this.userForm = await createUser();
@@ -114,9 +143,10 @@ export default {
       })
       await this.copy()
       try {
-        await this.connect(this.userForm)
+        await this.connect(this.userForm);
         this.$toasts.success('Successful connection.')
         setUser(this.userForm)
+        this.setUser(this.userForm)
         this.isLoading = false
         this.$router.push('/app')
       } catch (e) {

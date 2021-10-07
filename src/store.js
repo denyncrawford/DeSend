@@ -3,7 +3,9 @@ import { createStore } from 'vuex'
 export default createStore({
   state: {
     ipfsNode: null,
-    user: null
+    user: null,
+    DBController: null,
+    mainDB: null
   },
   mutations: {
     setIpfsNode(state, node) {
@@ -11,6 +13,12 @@ export default createStore({
     },
     setUser(state, user) {
       state.user = user
+    },
+    setDBController(state, controller) {
+      state.DBController = controller
+    },
+    setMainDatabase(state, db) {
+      state.mainDB = db
     }
   }
 })

@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-screen absolute text-center flex justify-center items-center">
     <div>
-      <div class="p-10">
+      <div class="p-10 flex flex-col items-center justify-center text-center">
         <h1 class="text-6xl font-bold text-indigo-600">Welcome to DeChat</h1>
         <p class="mt-10 text-md max-w-lg text-gray-400">
           DeChat is a chat application built with Vue.js and TailwindCSS that

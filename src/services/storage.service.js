@@ -4,8 +4,6 @@ export const IPFS = window.IpfsCore;
 
 export const Database = OrbitDB;
 
-console.log(Database)
-
 export const ipfsConfig = {
   Addresses: {
     Swarm: [
@@ -23,7 +21,7 @@ export const dbConfig = {
   // If database doesn't exist, create it
   create: true,
   // Don't wait to load from the network
-  sync: false,
+  sync: true,
   // Load only the local version of the database
   // localOnly: true,
   // Allow anyone to write to the database,

@@ -5,7 +5,7 @@ export const createUser = async (user) => {
   return {
     username,
     avatar: `https://avatars.dicebear.com/api/big-smile/${username}.svg`,
-    id: generate(),
+    id: generate()
   };
 };
 
