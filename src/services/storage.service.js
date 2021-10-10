@@ -1,5 +1,6 @@
 
-import "../../node_modules/ipfs-core/index.min.js";
+//import "../../node_modules/ipfs-core/index.min.js";
+//export * as IPFS from "../../node_modules/ipfs-core/esm/src/index.js";
 export const IPFS = window.IpfsCore;
 
 export const Database = OrbitDB;
