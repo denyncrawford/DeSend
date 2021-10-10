@@ -26,7 +26,7 @@ export default {
       this.setIpfsNode(await IPFS.create({ repo: "devSend", config }));
       const controller = await Database.createInstance(this.ipfsNode);
       this.setDBController(controller);
-      const db = await controller.docs('desend', dbConfig);
+      const db = await controller.docs('desend-staging', dbConfig);
       await db.load()
       this.setMainDatabase(db);
     }

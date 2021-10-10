@@ -96,7 +96,7 @@ export default {
       this.setIpfsNode(node);
       const controller = await Database.createInstance(this.ipfsNode);
       this.setDBController(controller);
-      const db = await controller.docs('desend', dbConfig);
+      const db = await controller.docs('desend-staging', dbConfig);
       await db.load();
       this.setMainDatabase(db);
       if (this.isGen) { 

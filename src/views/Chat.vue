@@ -28,14 +28,18 @@
               </div>
               <div class="absolute w-full h-full" key="chats" v-if="chats.length && location === 'chats'">
                 <div class="w-full h-full flex flex-col">
-                  <div @click="loadChat(chat)" :class="[ chat === chats[0] ? 'mt-5' : 'mt-2', chat._id === currentChat.id ? 'bg-gray-900 border-transparent' : 'bg-gray-800']" v-for="chat in chats" :key="chat._id" class="hover:bg-gray-900 cursor-pointer border-transparent transition items-center flex mb-2 mx-5 p-5 rounded-lg">
-                    <div :style="{ backgroundImage: `url(${chat.peer?.avatar})`}" class="w-14 h-14 bg-center bg-no-repat bg-cover rounded-full">
+                  <transition-group name="message">
+                    <div @click="loadChat(chat)" :class="[ chat === chats[0] ? 'mt-5' : 'mt-2', chat._id === currentChat.id ? 'bg-gray-900 border-transparent' : 'bg-gray-800']" v-for="chat in chats" :key="chat._id" class="hover:bg-gray-900 cursor-pointer border-transparent transition items-center flex mb-2 mx-5 p-5 rounded-lg">
+                      <div :style="{ backgroundImage: `url(${chat.peer?.avatar})`}" class="w-14 h-14 bg-center bg-no-repat bg-cover rounded-full">
+                      </div>
+                      <div class="flex-col text-left mx-5 text-white">
+                        <div class="text-md font-bold">{{ chat.peer?.username }}</div>
+                        <div>
+                          <div class="text-sm text-gray-600">{{ chat.snapshot }}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div class="flex-col text-left mx-5 text-white">
-                      <div class="text-md font-bold">{{ chat.peer?.username }}</div>
-                      <div class="text-xs text-indigo-600">{{ chat.peer?.id }}</div>
-                    </div>
-                  </div>
+                  </transition-group>
                 </div>
               </div>
               <div class="w-full h-full absolute" key="no-chats" v-if="!chats.length && location === 'chats'">
@@ -180,6 +184,7 @@
 <script>
 import { mapState } from "vuex";
 import { createMessage, chatModel } from '../services/chats.service.js'
+import notification from '../assets/notification.wav'
 import { PlusIcon, CogIcon, ChatAlt2Icon, ExclamationCircleIcon, ArrowLeftIcon } from "@heroicons/vue/outline"
 import { generate } from 'shortid';
 import { dbConfig } from '../services/storage.service.js'
@@ -188,6 +193,7 @@ export default {
   data() {
     return {
       rtm: null,
+      generalChannel: null,
       location: "chats",
       transitionName: "fade",
       locationHistory: [],
@@ -244,24 +250,29 @@ export default {
         await this.loadChats()
       };
     },
-    goBack() {
+    async goBack() {
       if (this.locationHistory.length === 0) return;
       this.transitionName = "fadeBack"
-      this.location = this.locationHistory.pop()
+      this.location = this.locationHistory.pop();
+      if (this.location === 'chats') { 
+        await this.loadChats()
+      };
     },
     async newChat() {
       await this.mainDB.load();
-      console.log(await this.mainDB.get(''));
+      await this.mainDB.get('');
       const peer = await this.mainDB.get(this.connectId)
       const me = await this.mainDB.get(this.user.id);
       if (!peer.length) return this.$toasts.error("No peer found");
       if (peer[0]._id === me[0]._id) return this.$toasts.error("You can't connect to yourself");
       const peerChats = await this.DBController.docs(peer[0].chats);
-      console.log(me[0].chats);
       const meChats = await this.DBController.docs(me[0].chats);
-      const checkExist = await peerChats.query(chat => chat.peers.some(peer => peer.id === me[0]._id));
-      const checkExis2 = await meChats.query(chat => chat.peers.some(peer => peer.id === peer[0]._id));
-      if (checkExist.length || checkExis2.length) return this.$toasts.error("You are already connected to this user");
+      await peerChats.load();
+      await meChats.load();
+      console.log(await peerChats.get(''), await meChats.get(''));
+      const checkExist = await peerChats.query(chat => chat.peers.some(p => p === me[0]._id));
+      const checkExis2 = await meChats.query(chat => chat.peers.some(p => p === peer[0]._id));
+      if (checkExist.length || checkExis2.length || this.chats.some(p => p.peers.some(e => e === peer[0]._id))) return this.$toasts.error("You are already connected to this user");
       const id = generate()
       const chatDB = await this.DBController.docs(`chat-${id}`, dbConfig);
       const address = await chatDB.address.toString();
@@ -270,6 +281,9 @@ export default {
       await meChats.put(chat, { pin: true });
       await this.loadChats();
       this.isLoading = false;
+      this.setLocation('chats');
+      this.generalChannel.broadcast(`create_chat@${this.connectId}`, {})
+      this.connectId = "";
     },
     async unloadChat() {
       this.currentChat.visible = false;
@@ -313,6 +327,8 @@ export default {
       this.currentChat.channel.broadcast('new_message', message);
       this.currentChat.messages.push(message)
       this.currentChat.currentMessage = "";
+      this.generalChannel.broadcast(`notification@${this.currentChat.peer.id}`, message);
+      this.sortChats({...message, sender: this.currentChat.peer.id});
       this.scrollContainerToBottom();
     },
     typingController(e) {
@@ -341,21 +357,51 @@ export default {
         id: peer[0]._id
       };
     },
+    async sendNotification(id, message) {
+      this.generalChannel.broadcast(`notification@${id}`, message);
+    },
     async loadChats() {
       const me = await this.mainDB.get(this.user.id);
       const chatsDBAdrress = me[0].chats;
       const chatsDB = await this.DBController.docs(chatsDBAdrress);
       await chatsDB.load();
       this.chats = await chatsDB.get('');
-      console.log(this.user.id);
-      this.chats = await Promise.all(this.chats.map(async e => ({ ...e, peer: await this.loadPeerData(e.peers.filter(c => c !== this.user.id)[0]) })));
+      this.chats = await Promise.all(this.chats.map(async chat => {
+        const doc = await this.DBController.docs(chat.address, dbConfig)
+        await doc.load();
+        const chatdb = doc.get('')
+        const current = chatdb.sort((a, b) => b.timestamp - a.timestamp).pop()
+        chat.lastUpdated = current?.timestamp || 0;
+        chat.snapshot = current?.content || '';
+        chat.peer = await this.loadPeerData(chat.peers.filter(c => c !== this.user.id)[0]);
+        return chat;
+      }));
+      this.chats = this.chats.sort((a, b) => b.lastUpdated - a.lastUpdated);
+      console.log(this.chats);
       this.setLocation('chats');
       this.isLoading = false;
+    },
+    sortChats(message) {
+      const chat = this.chats.find(c => c.peer.id === message.sender);
+      if (!chat) return;
+      chat.lastUpdated = message.timestamp;
+      chat.snapshot = message.content;
+      this.chats.sort((a, b) => b.lastUpdated - a.lastUpdated);
     },
     async waitForDBLoad() {
       if (this.mainDB === null) return setTimeout(() => this.waitForDBLoad(), 100);
       await this.loadChats();
-      this.rtm = new RtManager(this.ipfsNode.pubsub, 'devsend-app')
+      this.rtm = new RtManager(this.ipfsNode.pubsub, 'devsend-app');
+      this.generalChannel = await this.rtm.subscribe('general');
+      this.generalChannel.on(`create_chat@${this.user.id}`, async () => {
+        await this.loadChats();
+      });
+      this.generalChannel.on(`notification@${this.user.id}`, async (message) => {
+        this.sortChats(message);
+        if (this.currentChat.peer.id === message.sender) return;
+        new Audio(notification).play()
+        this.$toasts.success(`${message.sender} sent you a message`);
+      });
     }
   },
   async mounted() {

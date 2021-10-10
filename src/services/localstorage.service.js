@@ -10,3 +10,7 @@ export const getUser = () => {
 export const removeUser = () => {
   localStorage.removeItem('user');
 }
+
+export const clrUser = () => {
+  localStorage.clear();
+}

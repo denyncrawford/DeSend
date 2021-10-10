@@ -7,7 +7,9 @@ export const chatModel = (peers, id, address) => {
     name: '',
     peers,
     address,
-    started: false
+    started: false,
+    latsUpdate: Date.now(),
+    snapshot: ''
   };
 }
 
