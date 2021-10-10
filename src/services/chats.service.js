@@ -1,11 +1,23 @@
 
 import { generate } from 'shortid';
 
-export const chatModel = (peers, address) => {
+export const chatModel = (peers, id, address) => {
   return {
-    id: generate(),
+    _id: id,
     name: '',
     peers,
-    address
+    address,
+    started: false
+  };
+}
+
+export const createMessage = (content, sender) => {
+  return {
+    _id: generate(),
+    content,
+    sender,
+    timestamp: Date.now(),
+    read: false,
+    updated: false
   };
 }

@@ -1,6 +1,7 @@
 <template>
   <div class="w-full h-screen absolute text-center flex justify-center items-center">
     <div class="w-3/4 h-4/5 flex relative border rounded-lg border-indigo-600 overflow-hidden">
+      <!-- left -->
       <div class="border-r relative border-indigo-600 min-w-7xl flex flex-col">
         <div class="flex items-center px-8 py-3 border-b border-indigo-600">
           <div class="w-14 h-14 bg-center bg-no-repeat bg-cover" :style="{backgroundImage:`url(${user.avatar})`}"></div>
@@ -17,8 +18,17 @@
         <div class="h-full overflow-hidden">
           <div class="h-full max-h-full relative">
             <transition-group :name="transitionName">
-              <div class="absolute" key="chats" v-if="chats.length && location === 'chats'">
-
+              <div class="absolute w-full h-full" key="chats" v-if="chats.length && location === 'chats'">
+                <div class="w-full h-full flex flex-col">
+                  <div @click="loadChat(chat)" :class="[ chat === chats[0] ? 'mt-5' : 'mt-2', chat._id === currentChat.id ? 'bg-gray-900 border-transparent' : 'bg-gray-800']" v-for="chat in chats" :key="chat._id" class="hover:bg-gray-900 cursor-pointer border-transparent transition items-center flex mb-2 mx-5 p-5 rounded-lg">
+                    <div :style="{ backgroundImage: `url(${chat.peer?.avatar})`}" class="w-14 h-14 bg-center bg-no-repat bg-cover rounded-full">
+                    </div>
+                    <div class="flex-col text-left mx-5 text-white">
+                      <div class="text-md font-bold">{{ chat.peer?.username }}</div>
+                      <div class="text-xs text-indigo-600">{{ chat.peer?.id }}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="w-full h-full absolute" key="no-chats" v-if="!chats.length && location === 'chats'">
                 <div class="text-center -mt-10 flex flex-col justify-center items-center h-full text-gray-600 text-sm">
@@ -36,7 +46,7 @@
                   <input v-model="connectId" class="text-center bg-transparent font-bold border-none mt-5" type="text" placeholder="Type here an address">
                   <div>
                     <button class="hover:border-indigo-600 border-transparent border mt-5 text-indigo-600 rounded-lg px-4 py-2" @click="setLocation('chats')">Go Back</button>
-                    <button class="border-indigo-600 hover:bg-transparent ml-5 hover:text-indigo-600 bg-indigo-600 border-transparent border mt-5 text-white rounded-lg px-4 py-2" @click="connect">Connect chat</button>
+                    <button class="border-indigo-600 hover:bg-transparent ml-5 hover:text-indigo-600 bg-indigo-600 border-transparent border mt-5 text-white rounded-lg px-4 py-2" @click="newChat">Connect chat</button>
                   </div>
                 </div>
               </div>
@@ -48,38 +58,165 @@
           </div>
         </div>
       </div>
-      <div class="w-full h-full">
-        
-        <!-- <button @click="getAllUsers" class="border border-transparent hover:border-indigo-600 hover:bg-transparent p-2 10 bg-indigo-600 text-white rounded-lg"> Click here to log all users </button> -->
-      </div>
+      <!-- right -->
+      <div class="w-full h-full relative overflow-hidden">
+        <transition-group :name="currentChat.visible ? 'fadeBack' : 'fade'">
+          <div v-if="currentChat.visible" key="chat-view" class="chatContainer absolute w-full h-full">
+            <div class="relative w-full h-full flex flex-col">
+              <div class="chatHeader flex items-center px-8 py-3 border-b border-indigo-600">
+                <div>
+                  <ArrowLeftIcon class="h-5 w-5 text-white cursor-pointer" @click="unloadChat"/>
+                </div>
+                <div v-show="currentChat.typing" id="wave" class="ml-10 flex">
+                  <h1 class="mr-4 text-indigo-600">Typing</h1>
+                  <div>
+                    <span class="dot inline-block w-1.5 h-1.5 rounded-full mr-1 bg-indigo-600"></span>
+                    <span class="dot inline-block w-1.5 h-1.5 delay-100 rounded-full mr-1 bg-indigo-600"></span>
+                    <span class="dot inline-block w-1.5 h-1.5 delay-200 rounded-full mr-1 bg-indigo-600"></span>
+                  </div>
+                </div>
+                <div class="flex-col text-right ml-auto mx-5 text-white">
+                  <div class="text-md font-bold">{{ currentChat.peer?.username }}</div>
+                  <div class="text-xs text-indigo-600">{{ currentChat.peer?.id }}</div>
+                </div>
+                <div class="w-14 h-14 bg-center bg-no-repeat bg-cover" :style="{backgroundImage:`url(${currentChat.peer?.avatar})`}"></div>
+              </div>
+              <div class="relative overflow-hidden w-full h-full opacity-50">
+                <div ref="msgContainer" :class="[ currentChat.allowScrollAnimation ? 'scroll-smooth' : '' ]" class="overflow-auto flex relative h-full scrollbar scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800">
+                  <div class="mt-auto bottom-0 w-full">
+                    <transition-group name="message">
+                      <div v-for="(message, i) in currentChat.messages" :class="[ message.sender !== currentChat.messages[i+1]?.sender ? 'mb-5' : 'mb-1' ]" :key="message._id"  class="text-white text-left flex px-20">
+                        <div :class="[message.sender !== currentChat.messages[i-1]?.sender ? 'rounded-tr-sm' : 'rounded-tr-md']" class="ml-auto py-1 px-2 max-w-lg flex items-baseline text-white rounded-md bg-indigo-600" v-if="message.sender === user.id">
+                          <p class="text-white break-all">
+                            {{ message.content }}
+                          </p>
+                          <span class="text-xs ml-5 mt-auto font-thin">
+                            {{ timeStampToHour(message.timestamp) }}
+                          </span>
+                        </div>
+                        <div :class="[message.sender !== currentChat.messages[i-1]?.sender ? 'rounded-tl-sm' : 'rounded-tl-md']" class="py-1 px-2 max-w-lg text-white rounded-md flex items-baseline bg-gray-700" v-else>
+                          <p class="text-white break-all">
+                            {{ message.content }}
+                          </p>
+                          <span class="text-xs ml-5 mt-auto font-thin">
+                            {{ timeStampToHour(message.timestamp) }}
+                          </span>
+                        </div>
+                      </div>
+                    </transition-group>
+                  </div>
+                </div>
+              </div>
+              <div class="chatFooter flex items-center px-8 py-3 border-t border-t-indigo-600">
+                <div>
+                  
+                </div>
+                <div class="w-full">
+                  <input @keydown="typingController" @keydown.enter="sendMessage" v-model="currentChat.currentMessage" style="outline: none" type="text" class="w-full focus:ring-0 text-white outline-none bg-transparent border-none" placeholder="Type a message here">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="!currentChat.visible" key="no-chat-view" class="w-full h-full flex absolute items-center justify-center">
+            <div class="flex-col items-center justify-center text-center">
+              <svg class="ml-auto mr-auto" width="200" viewBox="0 0 594 437" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M146 119C146 95.2518 165.252 76 189 76H476C499.748 76 519 95.2518 519 119V232C519 255.748 499.748 275 476 275H189C165.252 275 146 255.748 146 232V119Z" class="fill-current text-gray-600"/>
+                <rect x="202" y="142" width="132" height="14" rx="7" fill="white"/>
+                <rect x="202" y="186" width="242" height="14" rx="7" fill="white"/>
+                <g filter="url(#filter0_d)">
+                <path d="M65 252C65 228.252 84.2518 209 108 209H395C418.748 209 438 228.252 438 252V365C438 388.748 418.748 408 395 408H108C84.2518 408 65 388.748 65 365V252Z" class="fill-current text-indigo-600" />
+                <rect x="121" y="275" width="132" height="14" rx="7" fill="white"/>
+                <rect x="121" y="319" width="242" height="14" rx="7" fill="white"/>
+                </g>
+                <circle cx="56" cy="151" r="9" fill="#C4C4C4"/>
+                <circle cx="480" cy="317" r="9" fill="#C4C4C4"/>
+                <circle cx="510" cy="9" r="7.5" stroke="#CDCDCD" stroke-width="3"/>
+                <circle cx="121" cy="57" r="7.5" stroke="#CDCDCD" stroke-width="3"/>
+                <rect x="594" y="187" width="4" height="21" rx="2" transform="rotate(90 594 187)" fill="#C4C4C4"/>
+                <rect x="586" y="200" width="4" height="21" rx="2" transform="rotate(-180 586 200)" fill="#C4C4C4"/>
+                <rect x="344" y="35" width="4" height="21" rx="2" transform="rotate(90 344 35)" fill="#C4C4C4"/>
+                <rect x="336" y="48" width="4" height="21" rx="2" transform="rotate(-180 336 48)" fill="#C4C4C4"/>
+                <rect x="21" y="313" width="4" height="21" rx="2" transform="rotate(90 21 313)" fill="#C4C4C4"/>
+                <rect x="13" y="326" width="4" height="21" rx="2" transform="rotate(-180 13 326)" fill="#C4C4C4"/>
+                <defs>
+                <filter id="filter0_d" x="40" y="188" width="423" height="249" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                <feOffset dy="4"/>
+                <feGaussianBlur stdDeviation="12.5"/>
+                <feComposite in2="hardAlpha" operator="out"/>
+                <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+                </filter>
+                </defs>
+              </svg>
+              <div>
+                <h1 class="text-indigo-600 font-bold mt-5 text-2xl">Is nice to chat with someone</h1>
+                <p class="text-gray-600 mt-5 text-sm max-w-md">
+                  You can select a chat with someone by clicking on their name in the left sidebar
+                </p>
+                <hr class="my-5 border-gray-600 border-dashed"/>
+                <p class="text-gray-600 mt-5 text-sm">
+                  Or start a new chat by clicking <span @click="setLocation('new')" class="text-indigo-600 cursor-pointer">here</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </transition-group>
+      </div>  
     </div>
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import { PlusIcon, CogIcon, ChatAlt2Icon, ExclamationCircleIcon } from "@heroicons/vue/outline"
+import { createMessage, chatModel } from '../services/chats.service.js'
+import { PlusIcon, CogIcon, ChatAlt2Icon, ExclamationCircleIcon, ArrowLeftIcon } from "@heroicons/vue/outline"
+import { generate } from 'shortid';
+import { dbConfig } from '../services/storage.service.js'
+import RtManager from '../services/pubsub.service.js'
 export default {
   data() {
     return {
+      rtm: null,
       location: "chats",
       transitionName: "fade",
       locationHistory: [],
       chats: [],
-      chats: [],
       contacts: [],
       currentChat: {
+        channel: null,
+        allowScrollAnimation: true,
+        visible: false,
         id: "",
         name: "",
+        peer: {
+          id: "",
+          name: "",
+          avatar: ""
+        },
+        db: null,
+        currentMessage: "",
+        typing: false,
+        typingTimeout: null,
         messages: []
       },
       connectId: "",
     }
   },
   computed: {
-    ...mapState(['mainDB', 'user']),
+    ...mapState(['mainDB', 'user', 'DBController', 'ipfsNode']),
     qrCode() {
       return `https://api.qrserver.com/v1/create-qr-code/?data=${this.user.id}&size=700x700&color=4f46e5&bgcolor=1f2937`
+    },
+    timeStampToHour() {
+      return (timestamp) => {
+        let date = new Date(timestamp);
+        let hours = date.getHours();
+        let minutes = "0" + date.getMinutes();
+        return hours + ':' + minutes.substr(-2);
+      }
     }
   },
   methods: {
@@ -87,30 +224,141 @@ export default {
       const users = await this.mainDB.get('')
       console.log(users)
     },
-    setLocation(location) {
+    async setLocation(location) {
       if (this.location === location) return;
       if (this.locationHistory.slice(-1)[0] === location) return this.goBack();
       this.transitionName = "fade"
       this.locationHistory.push(this.location)
       this.location = location;
-      if (location === 'chats') this.locationHistory = [];
+      if (location === 'chats') { 
+        this.locationHistory = []
+        await this.loadChats()
+      };
     },
     goBack() {
       if (this.locationHistory.length === 0) return;
       this.transitionName = "fadeBack"
       this.location = this.locationHistory.pop()
     },
-    async connect() {
+    async newChat() {
+      await this.mainDB.load();
+      console.log(await this.mainDB.get(''));
       const peer = await this.mainDB.get(this.connectId)
+      const me = await this.mainDB.get(this.user.id);
       if (!peer.length) return this.$toasts.error("No peer found");
-      if (peer[0]._id === this.user.id) return this.$toasts.error("You can't connect to yourself");
+      if (peer[0]._id === me[0]._id) return this.$toasts.error("You can't connect to yourself");
+      const peerChats = await this.DBController.docs(peer[0].chats);
+      console.log(me[0].chats);
+      const meChats = await this.DBController.docs(me[0].chats);
+      const checkExist = await peerChats.query(chat => chat.peers.some(peer => peer.id === me[0]._id));
+      const checkExis2 = await meChats.query(chat => chat.peers.some(peer => peer.id === peer[0]._id));
+      if (checkExist.length || checkExis2.length) return this.$toasts.error("You are already connected to this user");
+      const id = generate()
+      const chatDB = await this.DBController.docs(`chat-${id}`, dbConfig);
+      const address = await chatDB.address.toString();
+      const chat = chatModel([me[0]._id, peer[0]._id], id, address);
+      await peerChats.put(chat, { pin: true });
+      await meChats.put(chat, { pin: true });
+      await this.loadChats();
+      this.setLocation('chats');
+    },
+    async unloadChat() {
+      this.currentChat.visible = false;
+      this.currentChat.id = "";
+      this.currentChat.name = "";
+      this.currentChat.peer = {
+        id: "",
+        name: "",
+        avatar: ""
+      };
+      this.currentChat.currentMessage = "";
+      this.currentChat.messages = [];
+      this.currentChat.db = null;
+      await this.currentChat.channel.unsubscribe();
+      this.currentChat.channel = null;
+    },
+    async loadChat(chatObj) {
+      if (this.currentChat.channel) await this.currentChat.channel.unsubscribe();
+      this.currentChat.channel = await this.rtm.subscribe(chatObj._id);
+      this.currentChat.channel.on('new_message', (message) => {
+        this.currentChat.messages.push(message);
+        this.scrollContainerToBottom();
+      });
+      this.currentChat.channel.on('peer_typing', m => {this.currentChat.typing = true; console.log('typing');}); 
+      this.currentChat.channel.on('peer_typing_stop', m => {this.currentChat.typing = false; console.log('stop typing');}); 
+      const messages = await this.DBController.docs(chatObj.address, dbConfig);
+      await messages.load();
+      this.currentChat.visible = true;
+      this.currentChat.id = chatObj._id;
+      this.currentChat.name = chatObj.name;
+      this.currentChat.peer = chatObj.peer;
+      this.currentChat.messages = await messages.get('').sort((a, b) => a.timestamp - b.timestamp);
+      this.currentChat.db = messages;
+      this.scrollContainerToBottom(true);
+    },
+    async sendMessage() {
+      if (!this.currentChat.currentMessage) return;
+      const message = createMessage(this.currentChat.currentMessage, this.user.id);
+      this.currentChat.db.put(message, { pin: true });
+      this.currentChat.db.load();
+      this.currentChat.channel.broadcast('new_message', message);
+      this.currentChat.messages.push(message)
+      this.currentChat.currentMessage = "";
+      this.scrollContainerToBottom();
+    },
+    typingController(e) {
+      if (e.code === 'Backspace' || e.code === 'Enter') return this.currentChat.channel.broadcast('peer_typing_stop');
+      if (this.currentChat.typingTimeout) clearTimeout(this.currentChat.typingTimeout);
+      this.currentChat.typingTimeout = setTimeout(() => {
+        this.currentChat.channel.broadcast('peer_typing_stop');
+        this.currentChat.typingTimeout = null;
+      }, 3000);
+      this.currentChat.channel.broadcast('peer_typing');
+    },
+    scrollContainerToBottom(transition) {
+      if (transition) this.currentChat.allowScrollAnimation = false;
+      this.$nextTick(() => {
+        this.$refs?.msgContainer?.scrollTo(0, this.$refs.msgContainer.scrollHeight);
+        if (transition) this.currentChat.allowScrollAnimation = true;
+      })
+    },
+    async loadPeerData(id) {
+      const peer = await this.mainDB.get(id);
+      if (!peer.length) return '';
+      const avatar = peer[0].data.avatar;
+      return {
+        avatar,
+        username: peer[0].data.username,
+        id: peer[0]._id
+      };
+    },
+    async loadChats() {
+      const me = await this.mainDB.get(this.user.id);
+      const chatsDBAdrress = me[0].chats;
+      const chatsDB = await this.DBController.docs(chatsDBAdrress);
+      await chatsDB.load();
+      this.chats = await chatsDB.get('');
+      console.log(this.user.id);
+      this.chats = await Promise.all(this.chats.map(async e => ({ ...e, peer: await this.loadPeerData(e.peers.filter(c => c !== this.user.id)[0]) })));
+    },
+    async waitForDBLoad() {
+      if (this.mainDB === null) return setTimeout(() => this.waitForDBLoad(), 100);
+      await this.loadChats();
+      this.rtm = new RtManager(this.ipfsNode.pubsub, 'devsend-app')
+      console.log(this.rtm);
     }
+  },
+  async mounted() {
+    await this.waitForDBLoad();
+    //this.mockChats();
+    //this.chats = this.chats.map(async e => e.peer = await this.loadPeerData(this.chats.peers.filter(c => c !== this.user.id)[0]));
   },
   components: {
     PlusIcon,
     CogIcon,
     ChatAlt2Icon,
-    ExclamationCircleIcon
+    ExclamationCircleIcon,
+    ArrowLeftIcon
   }
 }
 </script>
@@ -132,4 +380,37 @@ export default {
   animation: fadeOutRight;
   animation-duration: .8s;
 }
+.message-enter-active {
+  animation: fadeInUp; /* referring directly to the animation's @keyframe declaration */
+  animation-duration: .2s; /* don't forget to set a duration! */
+}
+
+.message-leave-active {
+  animation: fadeOutDown;
+  animation-duration: .2s;
+}
+
+.message-move {
+  transition: transform .2s;
+}
+.dot{
+  animation: wave 1.3s linear infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -1.1s;
+}
+.dot:nth-child(3) {
+  animation-delay: -0.9s;
+}
+
+@keyframes wave {
+  0%, 60%, 100% {
+    transform: initial;
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
 </style>

@@ -32,8 +32,8 @@ export default {
     }
     this.$router.beforeEach(async (to, from, next) => {
       const user = await getUser()
-      if (to.meta.requiresAuth && !user) return next({ name: 'connect', query: { redirect: to.fullPath } })
       if (to.meta.requiresLogout && user) return next({ name: 'app' })
+      if (to.meta.requiresAuth && !user) return next({ name: 'connect', query: { redirect: to.fullPath } })
       document.title = to.meta.title
       next()
     })
