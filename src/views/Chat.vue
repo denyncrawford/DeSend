@@ -18,6 +18,14 @@
         <div class="h-full overflow-hidden">
           <div class="h-full max-h-full relative">
             <transition-group :name="transitionName">
+              <div class="absolute flex items-center justify-center w-full h-full z-10 bg-gray-800" key="loading" v-if="isLoading">
+                <div class="flex justify-center items-center flex-col">
+                  <div class="loader animate-spin ease-linear rounded-full border-4 border-t-4 border-gray-700 border-t-indigo-600 h-10 w-10"></div>
+                  <div>
+                    <div class="text-sm text-gray-600 font-bold mt-5">Loading chats</div>
+                  </div>
+                </div>
+              </div>
               <div class="absolute w-full h-full" key="chats" v-if="chats.length && location === 'chats'">
                 <div class="w-full h-full flex flex-col">
                   <div @click="loadChat(chat)" :class="[ chat === chats[0] ? 'mt-5' : 'mt-2', chat._id === currentChat.id ? 'bg-gray-900 border-transparent' : 'bg-gray-800']" v-for="chat in chats" :key="chat._id" class="hover:bg-gray-900 cursor-pointer border-transparent transition items-center flex mb-2 mx-5 p-5 rounded-lg">
@@ -184,6 +192,7 @@ export default {
       transitionName: "fade",
       locationHistory: [],
       chats: [],
+      isLoading: true,
       contacts: [],
       currentChat: {
         channel: null,
@@ -260,7 +269,7 @@ export default {
       await peerChats.put(chat, { pin: true });
       await meChats.put(chat, { pin: true });
       await this.loadChats();
-      this.setLocation('chats');
+      this.isLoading = false;
     },
     async unloadChat() {
       this.currentChat.visible = false;
@@ -284,10 +293,10 @@ export default {
         this.currentChat.messages.push(message);
         this.scrollContainerToBottom();
       });
-      this.currentChat.channel.on('peer_typing', m => {this.currentChat.typing = true; console.log('typing');}); 
-      this.currentChat.channel.on('peer_typing_stop', m => {this.currentChat.typing = false; console.log('stop typing');}); 
+      this.currentChat.channel.on('peer_typing', m => this.currentChat.typing = true); 
+      this.currentChat.channel.on('peer_typing_stop', m => this.currentChat.typing = false); 
       const messages = await this.DBController.docs(chatObj.address, dbConfig);
-      await messages.load();
+      await messages.load(50);
       this.currentChat.visible = true;
       this.currentChat.id = chatObj._id;
       this.currentChat.name = chatObj.name;
@@ -340,12 +349,13 @@ export default {
       this.chats = await chatsDB.get('');
       console.log(this.user.id);
       this.chats = await Promise.all(this.chats.map(async e => ({ ...e, peer: await this.loadPeerData(e.peers.filter(c => c !== this.user.id)[0]) })));
+      this.setLocation('chats');
+      this.isLoading = false;
     },
     async waitForDBLoad() {
       if (this.mainDB === null) return setTimeout(() => this.waitForDBLoad(), 100);
       await this.loadChats();
       this.rtm = new RtManager(this.ipfsNode.pubsub, 'devsend-app')
-      console.log(this.rtm);
     }
   },
   async mounted() {
