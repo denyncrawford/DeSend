@@ -370,7 +370,7 @@ export default {
         const doc = await this.DBController.docs(chat.address, dbConfig)
         await doc.load();
         const chatdb = doc.get('')
-        const current = chatdb.sort((a, b) => b.timestamp - a.timestamp).pop()
+        const current = chatdb.sort((a, b) => a.timestamp - b.timestamp).pop()
         chat.lastUpdated = current?.timestamp || 0;
         chat.snapshot = current?.content || '';
         chat.peer = await this.loadPeerData(chat.peers.filter(c => c !== this.user.id)[0]);
