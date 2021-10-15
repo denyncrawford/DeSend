@@ -95,7 +95,7 @@
               </div>
               <div class="relative overflow-hidden w-full h-full opacity-50">
                 <div ref="msgContainer" :class="[ currentChat.allowScrollAnimation ? 'scroll-smooth' : '' ]" class="overflow-auto flex relative h-full scrollbar scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800">
-                  <div class="mt-auto bottom-0 w-full">
+                  <div class="mt-auto pt-5 bottom-0 w-full">
                     <transition-group name="message">
                       <div v-for="(message, i) in currentChat.messages" :class="[ message.sender !== currentChat.messages[i+1]?.sender ? 'mb-5' : 'mb-1' ]" :key="message._id"  class="text-white text-left flex px-20">
                         <div :class="[message.sender !== currentChat.messages[i-1]?.sender ? 'rounded-tr-sm' : 'rounded-tr-md']" class="ml-auto py-1 px-2 max-w-lg flex items-baseline text-white rounded-md bg-indigo-600" v-if="message.sender === user.id">
@@ -370,9 +370,8 @@ export default {
       this.chats = await chatsDB.get('');
       this.chats = await Promise.all(this.chats.map(async chat => {
         const doc = await this.DBController.docs(chat.address, dbConfig)
-        await doc.load(10);
-        const chatdb = await doc.get('')
-        const current = chatdb.sort((a, b) => a.timestamp - b.timestamp).pop()
+        await doc.load(4);
+        const current = await doc.get('').sort((a, b) => a.timestamp - b.timestamp).pop()
         chat.lastUpdated = current?.timestamp || 0;
         chat.snapshot = current?.content || '';
         chat.peer = await this.loadPeerData(chat.peers.filter(c => c !== this.user.id)[0]);
