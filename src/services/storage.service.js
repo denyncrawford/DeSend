@@ -8,14 +8,14 @@ export const Database = OrbitDB;
 export const ipfsConfig = {
   Addresses: {
     Swarm: [
-      "/dns4/34.83.151.73/tcp/9090/ws/p2p-webrtc-star",
-      "/dns6/34.83.151.73/tcp/9090/ws/p2p-webrtc-star"
+      "/dns4/star.desend.ml/tcp/443/wss/p2p-webrtc-star/",
+      "/dns6/star.desend.ml/tcp/443/wss/p2p-webrtc-star/"
     ],
     Bootstrap: [
-      "/dns4/34.83.151.73/tcp/4003/ws/p2p/12D3KooWRkt9teYUZTwSFVq11ZB55LWF1knJgnE15imVnxBDopAy",
-      "/dns6/34.83.151.73/tcp/4003/ws/p2p/12D3KooWRkt9teYUZTwSFVq11ZB55LWF1knJgnE15imVnxBDopAy",
+      "/dns4/star.desend.ml/tcp/443/wss/p2p/12D3KooWRkt9teYUZTwSFVq11ZB55LWF1knJgnE15imVnxBDopAy",
+      "/dns4/star.desend.ml/tcp/443/wss/p2p/12D3KooWRkt9teYUZTwSFVq11ZB55LWF1knJgnE15imVnxBDopAy",
       "/dns6/ipfs.thedisco.zone/tcp/4430/wss/p2p/12D3KooWChhhfGdB9GJy1GbhghAAKCUR99oCymMEVS4eUcEy67nt",
-      "/dns4/ipfs.thedisco.zone/tcp/4430/wss/p2p/12D3KooWChhhfGdB9GJy1GbhghAAKCUR99oCymMEVS4eUcEy67nt",
+      "/dns4/ipfs.thedisco.zone/tcp/4430/wss/p2p/12D3KooWChhhfGdB9GJy1GbhghAAKCUR99oCymMEVS4eUcEy67nt"
     ],
   },
 }
