@@ -27,7 +27,7 @@
                 </div>
               </div>
               <div class="absolute w-full h-full" key="chats" v-if="chats.length && location === 'chats'">
-                <div class="w-full h-full flex flex-col">
+                <div class="w-full overflow-auto h-full flex flex-col scrollbar scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800">
                   <transition-group name="message">
                     <div @click="loadChat(chat)" :class="[ chat === chats[0] ? 'mt-5' : 'mt-2', chat._id === currentChat.id ? 'bg-gray-900 border-transparent' : 'bg-gray-800']" v-for="chat in chats" :key="chat._id" class="hover:bg-gray-900 cursor-pointer border-transparent transition items-center flex mb-2 mx-5 p-5 rounded-lg">
                       <div :style="{ backgroundImage: `url(${chat.peer?.avatar})`}" class="w-14 h-14 bg-center bg-no-repat bg-cover rounded-full">
