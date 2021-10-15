@@ -16,7 +16,7 @@
     "shortid": "^2.2.16",
     "vue": "^3.2.19",
     "vue-my-toasts": "^2.0.1",
-    "vue-router": "^4.0.11",
+    "vue-router": "^4.0.12",
     "vuex": "^4.0.2"
   },
   "devDependencies": {
