@@ -35,7 +35,7 @@
                       <div class="flex-col text-left mx-5 text-white">
                         <div class="text-md font-bold">{{ chat.peer?.username }}</div>
                         <div>
-                          <div class="text-sm text-gray-600">{{ chat.snapshot }}</div>
+                          <div :ref="`snapshot-${chat.peer?.id}`" class="text-sm text-gray-600">{{ chat.snapshot }}</div>
                         </div>
                       </div>
                     </div>
@@ -327,8 +327,10 @@ export default {
       this.currentChat.channel.broadcast('new_message', message);
       this.currentChat.messages.push(message)
       this.currentChat.currentMessage = "";
-      this.generalChannel.broadcast(`notification@${this.currentChat.peer.id}`, message);
-      this.sortChats({...message, sender: this.currentChat.peer.id});
+      const modifiedSender = {...message, sender: this.currentChat.peer.id, emitter: this.user.id}
+      this.sendNotification(this.currentChat.peer.id, message);
+      this.sendNotification(this.user.id, modifiedSender);
+      this.sortChats(modifiedSender);
       this.scrollContainerToBottom();
     },
     typingController(e) {
@@ -368,8 +370,8 @@ export default {
       this.chats = await chatsDB.get('');
       this.chats = await Promise.all(this.chats.map(async chat => {
         const doc = await this.DBController.docs(chat.address, dbConfig)
-        await doc.load();
-        const chatdb = doc.get('')
+        await doc.load(10);
+        const chatdb = await doc.get('')
         const current = chatdb.sort((a, b) => a.timestamp - b.timestamp).pop()
         chat.lastUpdated = current?.timestamp || 0;
         chat.snapshot = current?.content || '';
@@ -377,15 +379,17 @@ export default {
         return chat;
       }));
       this.chats = this.chats.sort((a, b) => b.lastUpdated - a.lastUpdated);
-      console.log(this.chats);
       this.setLocation('chats');
       this.isLoading = false;
     },
-    sortChats(message) {
+    async sortChats(message) {
       const chat = this.chats.find(c => c.peer.id === message.sender);
       if (!chat) return;
       chat.lastUpdated = message.timestamp;
+      this.$refs[`snapshot-${message.sender}`]?.classList.toggle('message-leave-active')
       chat.snapshot = message.content;
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.$refs[`snapshot-${message.sender}`]?.classList.toggle('message-enter-active')
       this.chats.sort((a, b) => b.lastUpdated - a.lastUpdated);
     },
     async waitForDBLoad() {
@@ -397,9 +401,10 @@ export default {
         await this.loadChats();
       });
       this.generalChannel.on(`notification@${this.user.id}`, async (message) => {
+        if (message.emitter === this.user.id) return 
         this.sortChats(message);
         if (this.currentChat.peer.id === message.sender) return;
-        new Audio(notification).play()
+        new Audio(notification).play();
         this.$toasts.success(`${message.sender} sent you a message`);
       });
     }
