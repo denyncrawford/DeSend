@@ -1,5 +1,6 @@
 if (typeof window.global === 'undefined') window.global = window;
 import { createApp } from 'vue'
+import { Vue3Mq } from "vue3-mq"
 import './tailwind.css'
 import "animate.css"
 import App from './App.vue'
@@ -18,6 +19,9 @@ const router = createRouter({
 
 app.use(router)
 app.use(store)
+app.use(Vue3Mq, {
+  preset: 'tailwind'
+})
 app.use(toast, {
   component: TailwindComponent,
   options: {

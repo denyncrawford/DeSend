@@ -19,6 +19,7 @@ export default {
   computed: {
     ...mapState(['ipfsNode'])
   },
+  inject: ['mq'],
   async mounted() {
     const session = await getUser();
     this.setUser(session)
