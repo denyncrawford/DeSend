@@ -8,8 +8,8 @@ export const Database = OrbitDB;
 export const ipfsConfig = {
   Addresses: {
     Swarm: [
-      "/dns4/star.desend.ml/tcp/443/wss/p2p-webrtc-star/",
-      "/dns6/star.desend.ml/tcp/443/wss/p2p-webrtc-star/"
+      "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/",
+      "/dns6/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/"
     ],
     Bootstrap: [
       "/dns4/star.desend.ml/tcp/443/wss/p2p/12D3KooWRkt9teYUZTwSFVq11ZB55LWF1knJgnE15imVnxBDopAy",
