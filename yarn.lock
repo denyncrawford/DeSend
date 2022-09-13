@@ -347,10 +347,10 @@
   resolved "https://registry.yarnpkg.com/@headlessui/vue/-/vue-1.4.1.tgz#bc1a37d3180eeeae28ad467f020c2dfdc8d43645"
   integrity sha512-yLgpqxJGdGw+ylouZfxxuXXBqCWRZq+Jh1jb23cXQIuAngbisN5BlSO8pPpvKOvk6hXr8dx9bPohSn45cbIIHw==
 
-"@heroicons/vue@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@heroicons/vue/-/vue-1.0.4.tgz#dcfd957a9abc827321054e643f6fb73629b3eef6"
-  integrity sha512-jm7JMoUGr7Asn07oYNmewxkdQALnskTzRo17iGpHG/apLcc+GFdvdN4XvWZ2awStodaqeZ4eYWg7UcI0LvLETQ==
+"@heroicons/vue@^2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@heroicons/vue/-/vue-2.0.11.tgz#b228ed87b99ddf1e99faa56134a6a05a7c870a2d"
+  integrity sha512-nTfN4aZVCP8Xntt9Q9RvH+vDagFHA4zFCUge6oCdkBrELH1i6K9feubvnEMhRIYdwC+nWULqKyJP7iVoWkR6Eg==
 
 "@ipld/car@^3.1.0":
   version "3.1.18"
